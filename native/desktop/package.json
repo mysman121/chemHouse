@@ -1,0 +1,41 @@
+{
+  "name": "chemhouse-desktop",
+  "version": "1.1.0",
+  "private": true,
+  "description": "ChemHouse chemistry and English study desktop app",
+  "author": "ChemHouse",
+  "license": "UNLICENSED",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "icons": "node scripts/generate-icons.cjs",
+    "dist": "npm run icons && electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.9.2",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.chemhouse.study",
+    "productName": "ChemHouse",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.cjs", "navigation.cjs", "offline.html", "package.json", "build/icon.png"],
+    "asar": true,
+    "artifactName": "ChemHouse-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.education",
+      "minimumSystemVersion": "13.0.0",
+      "icon": "build/icon.icns",
+      "target": ["dmg", "zip"]
+    },
+    "win": { "icon": "build/icon.ico", "target": ["nsis", "portable"] },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "ChemHouse-${version}-windows-${arch}-Setup.exe"
+    },
+    "portable": { "artifactName": "ChemHouse-${version}-windows-${arch}-Portable.exe" }
+  }
+}

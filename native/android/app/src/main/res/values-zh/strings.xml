@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">化学小屋</string>
+    <string name="home">首页</string>
+    <string name="reload">刷新</string>
+    <string name="open_browser">在浏览器中打开</string>
+    <string name="print">打印课程</string>
+    <string name="offline">暂时无法连接。请检查网络后重试。本机已保存的笔记会保留。</string>
+    <string name="retry">重试</string>
+    <string name="export_failed">笔记导出失败，请重试。</string>
+    <string name="export_saved">笔记已导出。</string>
+    <string name="webview_old">请更新 Android System WebView 或 Chrome 后使用化学小屋。</string>
+</resources>

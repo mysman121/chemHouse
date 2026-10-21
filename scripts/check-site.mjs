@@ -121,3 +121,10 @@ route("#/hk/home");click("challenge");listeners.hashchange();assert.equal(api.ge
 route("#/zh/lesson/hk-rates");assert.equal(api.getState().view,"learn");
 route("#/hk/ai");assert.ok(node("app").innerHTML.includes("AI 答疑"));
 console.log("Three-edition regression checks passed: Traditional Chinese routes, every bilingual lesson, challenges, isolated notes, AI screen and mainland-only filtering.");
+
+let nativeExport;
+context.window.ChemHouseAndroid={postMessage:payload=>{nativeExport=JSON.parse(payload);}};
+route("#/hk/notes");handlers.input({target:{id:"notes-input",value:"原生筆記 <tag>"}});click("export");
+assert.equal(nativeExport.type,"export-notes");assert.ok(nativeExport.text.includes("原生筆記 <tag>"));
+delete context.window.ChemHouseAndroid;
+console.log("Android note-export bridge check passed.");

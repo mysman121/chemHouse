@@ -58,3 +58,7 @@ JavaScript logic and rendered-markup smoke checks passed in the authoring runtim
 
 These are pending inputs, not files currently in this repository.
 
+
+## Android, macOS and Windows apps
+
+Native app source, platform requirements and build instructions are in [native/README.md](native/README.md). The **Build ChemHouse apps** GitHub Actions workflow produces Android packages, macOS Apple Silicon/Intel packages, modern Windows packages and a separately labelled Windows 7/8.1 legacy variant. DeepSeek credentials remain server-side. Initial builds are development/unsigned packages; production signing and physical-device testing are not implied.

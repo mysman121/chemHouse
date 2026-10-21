@@ -227,6 +227,7 @@ document.addEventListener("click",event=>{
  else if(action==="export"){
    const wrong=allQuestions().filter(q=>record.answers[q.id]&&!record.answers[q.id].correct);
    const text=t("noteTitle")+"\n\n"+record.notes+"\n\n"+t("wrongTitle")+"\n"+wrong.map(q=>q.prompt[edition]+"\n"+t("rightAnswer")+": "+q.options[edition][q.answer]+"\n"+q.explanation[edition]).join("\n\n");
+   if(window.ChemHouseAndroid&&typeof window.ChemHouseAndroid.postMessage==="function"){window.ChemHouseAndroid.postMessage(JSON.stringify({type:"export-notes",text}));return;}
    const url=URL.createObjectURL(new Blob(["\uFEFF"+text],{type:"text/plain;charset=utf-8"})),a=document.createElement("a");
    a.href=url;a.download="ChemHouse-"+(edition==="zh"?"zh-CN":edition==="hk"?"zh-HK":"en")+"-notes.txt";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
