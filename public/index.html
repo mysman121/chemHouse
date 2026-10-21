@@ -7,12 +7,61 @@
 @media(max-width:760px){.shell{display:block}.sidebar{position:relative;height:auto;padding:17px 18px;gap:18px;border-right:0;border-bottom:1px solid var(--border)}.brand{font-size:1.2rem}.nav{display:flex;overflow:auto;gap:6px;padding-bottom:2px}.nav button{white-space:nowrap;padding:10px 12px;font-size:.79rem}.nav-icon{display:none}.side-bottom{display:none}.topbar{padding:14px 18px}.topbar .crumb{font-size:.72rem}.edition button{font-size:.7rem;padding:8px}.hero{grid-template-columns:1fr;padding:27px 24px;border-radius:19px;gap:0}.hero h1{font-size:2.65rem}.hero-art{min-height:180px}.hero-art svg{height:190px;max-width:320px}.floating-label{right:12px;bottom:10px}.stats{gap:9px;margin:18px 0 27px}.stat{padding:15px 12px}.stat .value{font-size:1.45rem}.stat p{font-size:.7rem}.stat .eyebrow{font-size:.61rem;letter-spacing:.06em}main{padding:23px 18px 38px}.grid,.split,.tools-grid{grid-template-columns:1fr}.card{padding:21px}.section-head{align-items:start}.section-head h2{font-size:1.35rem}.lesson-body{padding:23px}.lesson-body h1{font-size:1.9rem}.question{padding:20px}.filter-bar select{max-width:none}.section-head .pill{font-size:.65rem}.element-grid{grid-template-columns:repeat(5,minmax(0,1fr))}footer{padding:20px 18px}.hero .eyebrow{font-size:.67rem}h1{font-size:2.3rem}}
 @media(prefers-reduced-motion:no-preference){.card,.btn,.option{transition:background .15s,border-color .15s,transform .15s}.card:hover{transform:translateY(-2px)}}
 @media print{.sidebar,.topbar,footer,.actions,.back,.lesson-side,.option{display:none}.shell,.lesson-layout{display:block}main{padding:0}.lesson-body{border:0}.hero-art{display:none}}
+.ai-panel{max-width:960px}.ai-messages{display:grid;gap:16px;margin:20px 0;max-height:65vh;overflow-y:auto;overscroll-behavior:contain}.ai-message{padding:18px;border:1px solid var(--border);border-radius:14px;background:#f5f8f1}.ai-message.user{background:#edf3e8;margin-left:clamp(0px,4vw,45px)}.ai-message.assistant{margin-right:clamp(0px,4vw,45px)}.ai-message strong{font-size:.8rem;color:var(--green)}.ai-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin-top:10px;font-size:.94rem}
 </style></head><body><div id="app"></div><noscript><p>This study website needs JavaScript. Please enable it in your browser. 此学习网站需要启用 JavaScript。</p></noscript><script>(function chemistryApp(DATA){
 "use strict";
 const {LESSONS,UI,BOOKS,ELEMENTS}=DATA;
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let storageAvailable=true,edition="en",view="home",detail="",record={read:[],answers:{},notes:""};
+const AI_TEXT={
+ en:{ai:"Ask AI",aiIntro:"Ask DeepSeek about chemistry or English. Choose your course and ask a question, then follow up at your own pace.",aiPrivacy:"Your question, recent chat and selected lesson are sent to DeepSeek. Chat stays in this tab until you reload. Avoid personal information. AI can make mistakes; check important answers with your teacher.",aiQuestion:"Your question",aiPlaceholder:"For example: Why does a catalyst increase reaction rate?",aiSend:"Ask DeepSeek",aiClear:"New conversation",aiWait:"DeepSeek is preparing an explanation…",aiYou:"You",aiTutor:"DeepSeek tutor",aiEmpty:"What would you like to understand today?",aiCourse:"Course",aiHK:"Hong Kong · HKDSE",aiCN:"Mainland · 人教版",aiGeneral:"General high school",aiContext:"Lesson context",aiNoContext:"No lesson selected",aiStop:"Stop waiting",aiRetry:"Try again",aiLimit:"Enter a question of up to 4,000 characters.",aiCut:"This reply reached its length limit. Ask a follow-up to continue.",aiLesson:"Ask AI about this lesson",aiSample:"Explain oxidation and reduction with an example.",aiExample:"Try an example",aiNetwork:"Could not connect. Check your connection and try again.",aiUnavailable:"AI tutoring is not available yet. The site owner needs to activate it.",aiRate:"Too many questions from this network. Please wait a minute and try again.",aiTimeout:"The reply took too long. Please try again.",aiBusy:"DeepSeek is busy. Please try again shortly.",aiFailed:"DeepSeek could not answer just now. Please try again.",aiChanged:"Start a new conversation to change the course or lesson."},
+ zh:{ai:"AI 答疑",aiIntro:"向 DeepSeek 提出化学或英语问题，选择课程，再通过追问逐步理解。",aiPrivacy:"你的问题、最近对话及所选课程内容会发送至 DeepSeek。对话仅保留在当前标签页内，刷新后清除。请勿填写个人资料。AI 可能出错，重要答案请向老师核实。",aiQuestion:"你的问题",aiPlaceholder:"例如：为什么催化剂可以加快化学反应速率？",aiSend:"向 DeepSeek 提问",aiClear:"新建对话",aiWait:"DeepSeek 正在整理讲解……",aiYou:"你",aiTutor:"DeepSeek 学习助手",aiEmpty:"今天想弄懂什么？",aiCourse:"课程体系",aiHK:"香港 · HKDSE",aiCN:"内地 · 人教版",aiGeneral:"通用高中课程",aiContext:"参考课程",aiNoContext:"不选择课程",aiStop:"停止等待",aiRetry:"重试",aiLimit:"请输入不超过 4,000 字符的问题。",aiCut:"本次回答达到长度上限，可以追问以继续。",aiLesson:"向 AI 询问本课",aiSample:"请用例子解释氧化反应和还原反应。",aiExample:"试试示例问题",aiNetwork:"连接失败，请检查网络后重试。",aiUnavailable:"AI 答疑尚未启用，需要网站管理员完成配置。",aiRate:"当前网络提问较多，请稍等一分钟再试。",aiTimeout:"回答等待超时，请重试。",aiBusy:"DeepSeek 暂时繁忙，请稍后重试。",aiFailed:"暂时无法获取回答，请重试。",aiChanged:"如需更换课程体系或参考课程，请新建对话。"}
+};
+for(const lang of ["en","zh"])Object.assign(UI[lang],AI_TEXT[lang]);
+const newChat=lang=>({messages:[],draft:"",pending:false,error:"",controller:null,course:lang==="zh"?"mainland":"hkdse",lesson:""});
+const chats={en:newChat("en"),zh:newChat("zh")};
+function chatMessages(chat){
+ return chat.messages.length?chat.messages.map(m=>`<article class="ai-message ${m.role}" aria-label="${esc(t(m.role==="user"?"aiYou":"aiTutor"))}"><strong>${esc(t(m.role==="user"?"aiYou":"aiTutor"))}</strong><div class="ai-text">${esc(m.content)}</div>${m.truncated?`<p class="muted">${esc(t("aiCut"))}</p>`:""}</article>`).join(""):`<div class="empty">${esc(t("aiEmpty"))}<br><button class="text-btn" data-action="ai-example">${esc(t("aiExample"))}</button></div>`;
+}
+function ai(){
+ const chat=chats[edition],locked=chat.messages.length||chat.pending;
+ return `<span class="eyebrow muted">DeepSeek · CHEMHOUSE</span><h1 style="font-size:2.4rem;margin:12px 0">${esc(t("ai"))}</h1><p class="muted">${esc(t("aiIntro"))}</p><div class="notice">${esc(t("aiPrivacy"))}</div><section class="card ai-panel" style="margin-top:20px"><div class="tools-grid"><div class="field"><label for="ai-course">${esc(t("aiCourse"))}</label><select id="ai-course" class="input" ${locked?"disabled":""}>${[["hkdse","aiHK"],["mainland","aiCN"],["general","aiGeneral"]].map(([v,k])=>`<option value="${v}" ${chat.course===v?"selected":""}>${esc(t(k))}</option>`).join("")}</select></div><div class="field"><label for="ai-lesson">${esc(t("aiContext"))}</label><select id="ai-lesson" class="input" ${locked?"disabled":""}><option value="">${esc(t("aiNoContext"))}</option>${visibleLessons().map(l=>`<option value="${l.id}" ${chat.lesson===l.id?"selected":""}>${esc(title(l))}</option>`).join("")}</select></div></div>${locked?`<p class="muted" style="font-size:.8rem">${esc(t("aiChanged"))}</p>`:""}<div id="ai-messages" class="ai-messages" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="${chat.pending}">${chatMessages(chat)}</div><p role="status" class="muted">${chat.pending?esc(t("aiWait")):""}</p>${chat.error?`<p role="alert" class="error">${esc(t(chat.error))}</p>`:""}<form id="ai-form"><label for="ai-input">${esc(t("aiQuestion"))}</label><textarea id="ai-input" class="input" rows="4" maxlength="4000" required ${chat.pending?"disabled":""} placeholder="${esc(t("aiPlaceholder"))}" style="margin:10px 0;resize:vertical">${esc(chat.draft)}</textarea><div class="actions"><button class="btn" type="submit" ${chat.pending?"disabled":""}>${esc(t("aiSend"))}</button>${chat.pending?btn(t("aiStop"),"ai-stop","","secondary"):""}${chat.error?btn(t("aiRetry"),"ai-retry","","secondary"):""}${btn(t("aiClear"),"ai-clear","","secondary")}</div></form></section>`;
+}
+async function askAI(){
+ const lang=edition,chat=chats[lang];if(chat.pending)return;
+ const question=chat.draft.trim();
+ if(!question||question.length>4000){chat.error="aiLimit";render();return;}
+ chat.pending=true;chat.error="";chat.draft="";
+ const history=chat.messages.slice(-4).map(({role,content})=>({role,content}));
+ chat.messages.push({role:"user",content:question});
+ const controller=new AbortController();chat.controller=controller;render();
+ const timeout=setTimeout(()=>controller.abort(),70000);
+ let succeeded=false;
+ try{
+   const lesson=LESSONS.find(l=>l.id===chat.lesson);
+   const context=lesson?[lesson.title[lang],...lesson.points[lang],lesson.example[lang],lesson.pitfall[lang]].join("\n").slice(0,6000):"";
+   const payload={edition:lang,curriculum:chat.course,context,messages:[...history,{role:"user",content:question}]};
+   while(new TextEncoder().encode(JSON.stringify(payload)).length>65536&&payload.messages.length>1)payload.messages.splice(0,2);
+   const response=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify(payload)});
+   const result=await response.json();
+   if(chats[lang]!==chat||controller.signal.aborted)return;
+   if(!response.ok){
+     chat.error=({not_configured:"aiUnavailable",configuration:"aiUnavailable",credits:"aiUnavailable",unavailable:"aiUnavailable",rate_limited:"aiRate",timeout:"aiTimeout",busy:"aiBusy"})[result.error]||"aiFailed";
+   }else if(typeof result.answer==="string"&&result.answer.trim()){
+     chat.messages.push({role:"assistant",content:result.answer,truncated:result.truncated});succeeded=true;
+     chat.messages=chat.messages.slice(-20);
+   }else chat.error="aiFailed";
+ }catch(e){if(chats[lang]===chat)chat.error=e.name==="AbortError"?"aiTimeout":"aiNetwork";}
+ finally{
+   clearTimeout(timeout);
+   if(chats[lang]===chat){
+     if(!succeeded){chat.messages.pop();chat.draft=question;}
+     chat.pending=false;chat.controller=null;
+     if(edition===lang&&view==="ai")render();
+   }
+ }
+}
 const fallback=()=>({read:[],answers:{},notes:""});
 const validIds=new Set(LESSONS.map(l=>l.id)),questionIds=new Set(LESSONS.flatMap(l=>l.questions.map(q=>q.id)));
 function sanitiseRecord(raw){
@@ -57,7 +106,7 @@ function route(){
   if(edition!==nextEdition||!document.documentElement.dataset.initialised){edition=nextEdition;readRecord();}
   document.documentElement.dataset.initialised="true";
   try{localStorage.setItem("chemhouse-edition",edition);}catch{}
-  view=["home","learn","lesson","practice","tools","notes","about"].includes(parts[1])?parts[1]:"home";
+  view=["home","learn","lesson","practice","tools","notes","about","ai"].includes(parts[1])?parts[1]:"home";
   try{detail=decodeURIComponent(parts[2]||"");}catch{detail="";}
   if((view==="lesson"||view==="practice")&&detail&&!visibleLessons().some(l=>l.id===detail)){view="learn";detail="";}
   render();
@@ -89,7 +138,7 @@ function learn(){
 function lesson(){
  const l=visibleLessons().find(x=>x.id===detail);
  if(!l)return learn();
- return `<div class="back">${btn("← "+t("back"),"go","learn","secondary")}</div><div class="lesson-layout"><article class="lesson-body"><span class="pill">${esc(bookTitle(l.book))}</span><h1>${esc(title(l))}</h1><p class="muted">${esc(t("minutes"))} · ${l.questions.length} ${esc(t("q"))}</p><h2>${esc(t("key"))}</h2><ul>${l.points[edition].map(x=>`<li>${esc(x)}</li>`).join("")}</ul><div class="example"><strong>${esc(t("worked"))}</strong><p>${esc(l.example[edition])}</p></div><div class="pitfall"><strong>${esc(t("trap"))}</strong><p style="margin:8px 0 0">${esc(l.pitfall[edition])}</p></div><div class="actions">${btn(record.read.includes(l.id)?t("completed"):t("done"),"complete",l.id)}${btn(t("try")+" →","topic",l.id,"secondary")}</div></article><aside class="lesson-side"><div class="card"><span class="course-icon">✦</span><h3>${esc(t("takeaway"))}</h3><p>${esc(t("takeawayDesc"))}</p>${btn(t("notes"),"go","notes","subtle")}${btn(t("print"),"print","","secondary")}</div></aside></div>`;
+ return `<div class="back">${btn("← "+t("back"),"go","learn","secondary")}</div><div class="lesson-layout"><article class="lesson-body"><span class="pill">${esc(bookTitle(l.book))}</span><h1>${esc(title(l))}</h1><p class="muted">${esc(t("minutes"))} · ${l.questions.length} ${esc(t("q"))}</p><h2>${esc(t("key"))}</h2><ul>${l.points[edition].map(x=>`<li>${esc(x)}</li>`).join("")}</ul><div class="example"><strong>${esc(t("worked"))}</strong><p>${esc(l.example[edition])}</p></div><div class="pitfall"><strong>${esc(t("trap"))}</strong><p style="margin:8px 0 0">${esc(l.pitfall[edition])}</p></div><div class="actions">${btn(record.read.includes(l.id)?t("completed"):t("done"),"complete",l.id)}${btn(t("try")+" →","topic",l.id,"secondary")}</div></article><aside class="lesson-side"><div class="card"><span class="course-icon">✦</span><h3>${esc(t("takeaway"))}</h3><p>${esc(t("takeawayDesc"))}</p>${btn(t("aiLesson"),"ask-lesson",l.id,"subtle")}${btn(t("notes"),"go","notes","subtle")}${btn(t("print"),"print","","secondary")}</div></aside></div>`;
 }
 function questionCard(q,i){
  const a=record.answers[q.id],answered=!!a,options=q.options[edition];
@@ -122,14 +171,19 @@ function about(){return `<article class="lesson-body"><span class="eyebrow muted
 function render(){
  document.documentElement.lang=t("lang");
  document.title=edition==="zh"?"化学小屋 · 高中化学学习空间":"ChemHouse · Your chemistry & English study space";
- const views={home,learn,lesson,practice,tools,notes,about};
- const navItems=[["home","dashboard","◫"],["learn","learn","▤"],["practice","practice","◇"],["tools","tools","⚗"],["notes","notes","▧"]];
+ const views={home,learn,lesson,practice,tools,notes,about,ai};
+ const navItems=[["home","dashboard","◫"],["learn","learn","▤"],["practice","practice","◇"],["ai","ai","✦"],["tools","tools","⚗"],["notes","notes","▧"]];
  const active=view==="lesson"?"learn":view;
  $("app").innerHTML=`<a class="skip" href="#main-content">${esc(t("start"))}</a>${!storageAvailable?`<div class="storage-warning" role="status">${esc(t("storage"))}</div>`:""}<div class="shell"><aside class="sidebar"><a class="brand" href="#/${edition}/home"><span class="mark" aria-hidden="true">⌬</span><span>${esc(t("brand"))}<small>${edition==="zh"?"高中化学学习空间":"THE STUDY SPACE"}</small></span></a><nav class="nav" aria-label="${esc(t("dashboard"))}">${navItems.map(([id,label,icon])=>`<button data-action="go" data-value="${id}" class="${active===id?"active":""}" ${active===id?'aria-current="page"':""}><span class="nav-icon" aria-hidden="true">${icon}</span>${esc(t(label))}</button>`).join("")}</nav><div class="side-bottom"><strong>${esc(t("local"))}</strong>${esc(t("localDesc"))}</div></aside><div class="workspace"><header class="topbar"><span class="crumb">${esc(t("crumb"))}</span><div class="edition" role="group" aria-label="${esc(t("edition"))}"><button data-action="edition" data-value="en" lang="en" class="${edition==="en"?"selected":""}" aria-pressed="${edition==="en"}">English</button><button data-action="edition" data-value="zh" lang="zh-CN" class="${edition==="zh"?"selected":""}" aria-pressed="${edition==="zh"}">人教版 · 简体中文</button></div></header><main id="main-content" tabindex="-1">${views[view]()}</main><footer><span>${esc(t("footer"))}</span><span><button class="text-btn" style="font-size:inherit" data-action="go" data-value="about">${esc(t("scope"))}</button> · <a href="https://github.com/mysman121/chemHouse" target="_blank" rel="noopener noreferrer">${esc(t("sourceCode"))} ↗</a></span></footer></div></div>`;
 }
 document.addEventListener("click",event=>{
  const b=event.target.closest("[data-action]");if(!b)return;
  const action=b.dataset.action,value=b.dataset.value||"";
+ if(action==="ai-example"){chats[edition].draft=t("aiSample");render();$("ai-input").focus();return;}
+ if(action==="ai-clear"){chats[edition].controller?.abort();chats[edition]=newChat(edition);render();return;}
+ if(action==="ai-stop"){const old=chats[edition];old.controller?.abort();chats[edition]={...old,messages:old.messages.slice(0,-1),draft:old.messages.at(-1)?.content||"",pending:false,error:"",controller:null};render();return;}
+ if(action==="ai-retry"){askAI();return;}
+ if(action==="ask-lesson"){const chat=chats[edition];if(!chat.messages.length&&!chat.pending)chat.lesson=value;nav("ai");return;}
  if(action==="go"){if(value==="learn"){libraryFilter="all";searchTerm="";}nav(value);}
  else if(action==="edition"){
    if(value!=="en"&&value!=="zh")return;
@@ -170,14 +224,18 @@ document.addEventListener("click",event=>{
  }
 });
 document.addEventListener("change",event=>{
+ if(event.target.id==="ai-course"&&!chats[edition].messages.length&&!chats[edition].pending)chats[edition].course=event.target.value;
+ if(event.target.id==="ai-lesson"&&!chats[edition].messages.length&&!chats[edition].pending)chats[edition].lesson=event.target.value;
  if(event.target.id==="book-filter"){libraryFilter=event.target.value;$("lesson-cards").innerHTML=lessonCards();}
  if(event.target.id==="topic-filter")nav("practice",event.target.value);
 });
 document.addEventListener("input",event=>{
+ if(event.target.id==="ai-input")chats[edition].draft=event.target.value;
  if(event.target.id==="search"){searchTerm=event.target.value;$("lesson-cards").innerHTML=lessonCards();}
  if(event.target.id==="notes-input"){record.notes=event.target.value;const ok=save();$("save-status").textContent=ok?t("saved"):t("unsaved");}
 });
 document.addEventListener("submit",event=>{
+ if(event.target.id==="ai-form"){event.preventDefault();askAI();return;}
  const id=event.target.id;if(id!=="mole-form"&&id!=="concentration-form")return;
  event.preventDefault();const mole=id==="mole-form",first=$(mole?"mass":"amount").value,second=$(mole?"molar":"volume").value;
  const result=calculate(first,second),out=$(mole?"mole-result":"concentration-result");
