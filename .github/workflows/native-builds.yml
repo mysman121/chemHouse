@@ -1,0 +1,130 @@
+name: Build ChemHouse apps
+on:
+  push:
+    branches: [main, feat/native-apps]
+    paths:
+      - 'native/**'
+      - '.github/workflows/native-builds.yml'
+      - 'public/**'
+      - 'scripts/check-site.mjs'
+      - 'scripts/check-worker.mjs'
+      - 'src/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run check
+      - run: node --test native/check-native.cjs
+  android:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build installable preview APK and unsigned release bundle
+        working-directory: native/android
+        run: gradle --no-daemon :app:assembleDebug :app:bundleRelease :app:lintDebug
+      - name: Collect Android packages
+        run: |
+          mkdir -p native/android/dist
+          cp native/android/app/build/outputs/apk/debug/app-debug.apk native/android/dist/ChemHouse-1.1.0-android-preview.apk
+          cp native/android/app/build/outputs/bundle/release/app-release.aab native/android/dist/ChemHouse-1.1.0-android-unsigned.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChemHouse-Android
+          path: native/android/dist/*
+          if-no-files-found: error
+          retention-days: 30
+  desktop:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows-modern-x64
+            args: --win --x64
+            legacy: false
+          - os: windows-latest
+            target: windows-legacy-x64
+            args: --win --x64 --config legacy.config.cjs
+            legacy: true
+          - os: windows-latest
+            target: windows-legacy-ia32
+            args: --win --ia32 --config legacy.config.cjs
+            legacy: true
+          - os: macos-latest
+            target: macos-arm64
+            args: --mac --arm64
+            legacy: false
+          - os: macos-latest
+            target: macos-x64
+            args: --mac --x64
+            legacy: false
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native/desktop
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install desktop build tools
+        run: npm install --no-audit --no-fund
+      - name: Select Windows 7/8.1 runtime
+        if: matrix.legacy
+        run: npm install --save-dev --package-lock=false --no-audit --no-fund electron@22.3.27
+      - name: Build installer and portable package
+        run: npm run dist -- ${{ matrix.args }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChemHouse-${{ matrix.target }}
+          path: |
+            native/desktop/dist/*.exe
+            native/desktop/dist/*.dmg
+            native/desktop/dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+  checksums:
+    needs: [android, desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ChemHouse-*
+          path: packages
+          merge-multiple: true
+      - name: Compute SHA-256 checksums
+        run: |
+          cd packages
+          sha256sum *.apk *.aab *.exe *.dmg *.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChemHouse-checksums
+          path: packages/SHA256SUMS.txt

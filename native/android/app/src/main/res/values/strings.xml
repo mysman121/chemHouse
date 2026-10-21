@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">ChemHouse</string>
+    <string name="home">Home</string>
+    <string name="reload">Reload</string>
+    <string name="open_browser">Open in browser</string>
+    <string name="print">Print lesson</string>
+    <string name="offline">Cannot connect. Check your internet connection, then tap Retry. Your saved notes remain on this device.</string>
+    <string name="retry">Retry</string>
+    <string name="export_failed">Could not export notes. Please try again.</string>
+    <string name="export_saved">Notes exported.</string>
+    <string name="webview_old">Please update Android System WebView or Chrome to use ChemHouse.</string>
+</resources>
