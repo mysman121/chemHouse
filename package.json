@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node scripts/check-site.mjs && node --test scripts/check-worker.mjs",
+    "check": "node scripts/check-site.mjs && node --test scripts/check-worker.mjs && node --test pages/check-pages.mjs",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "dev": "wrangler dev",
+    "pages:build": "node pages/build.mjs",
+    "pages:deploy": "npm run pages:build && wrangler pages deploy pages/dist --config pages/wrangler.jsonc"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
   }
 }
-
