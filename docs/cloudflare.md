@@ -1,59 +1,53 @@
-# Cloudflare deployment
+# Cloudflare Worker deployment and DeepSeek activation
 
-The static website is complete in `public/index.html`. Publishing requires a Cloudflare account login; this session has no connected Cloudflare deployment credentials.
+The existing application is https://chemhouse.ponlavat10.workers.dev/. Deploy the repository root to the **chemhouse** Worker. `wrangler.jsonc` now serves `public/` and routes `/api/*` to `src/worker.js`. No frontend build is needed. A static-only Pages deployment does not support this endpoint.
 
-## Recommended: link the existing repository to Cloudflare Pages
+## Activate in the dashboard
 
-1. Open https://dash.cloudflare.com/ and sign in.
-2. Go to **Workers & Pages → Create application → Pages → Import an existing Git repository**.
-3. Authorize GitHub access if prompted; select **mysman121/chemHouse**.
-4. Use the following values:
+1. Open **Workers & Pages → chemhouse → Settings → Variables and Secrets**.
+2. Add an encrypted **Secret** named `DEEPSEEK_API_KEY`. Paste your DeepSeek key privately into the secret value and save it. Do not commit the key or send it to students.
+3. Deploy the latest `main` from `mysman121/chemHouse`. With Workers Builds, use `npm run check` for the build command and `npx wrangler deploy` for deployment. If automatic deployment is enabled, check that its latest deployment includes the AI tutor commit. Dashboard navigation labels may vary.
+4. Open **Ask AI / AI 答疑** on the site and ask a short chemistry question, then a follow-up. Only a real request can verify key validity, account credit and DeepSeek reachability.
 
-| Setting | Value |
-| --- | --- |
-| Production branch | `main` |
-| Framework preset | `None` |
-| Build command | `exit 0` |
-| Build output directory | `public` |
-| Root directory | Repository root |
-| Environment variables | None required |
+`DEEPSEEK_MODEL` is a non-secret server setting, defaulting to `deepseek-flash` per current DeepSeek documentation. Change it in `wrangler.jsonc` if needed. The key is not a build-time variable; it must be a Worker runtime secret.
 
-5. Save and deploy.
-6. Open the **actual URL returned by Cloudflare**. Do not assume a particular `pages.dev` hostname is available.
+## CLI deployment
 
-Later commits to the connected branch can deploy automatically. Students need only the resulting public URL.
-
-## Alternative: Deploy to Cloudflare button (Workers)
-
-https://deploy.workers.cloudflare.com/?url=https://github.com/mysman121/chemHouse
-
-This opens the supported Cloudflare setup flow. It may clone the repository into a new repository, then use Workers Builds to deploy. The included `wrangler.jsonc` serves `public/` as static assets; no server code or secrets are needed. Keep this distinction in mind if you want future changes to deploy from the existing `chemHouse` repository.
-
-For local CLI deployment from your own authenticated machine:
+From an authenticated local checkout:
 
 ```sh
 npm install
 npx wrangler login
+npx wrangler secret put DEEPSEEK_API_KEY
+npm run check
 npm run deploy
 ```
 
-The resulting hostname is assigned within your Cloudflare account and is unknown until deployment succeeds.
+The secret command prompts for the value. Never put the actual key on the command line. For local testing, put `DEEPSEEK_API_KEY=your-local-key` in ignored `.dev.vars`, then run `npm run dev`. Do not publish `.dev.vars`.
 
-## Verify after publication
+## Behaviour and limits
 
-- Open the returned URL on a phone and computer.
-- Switch between English and 人教版 · 简体中文.
-- Open a lesson; mark it explored; reload.
-- Answer a question incorrectly, then retry it correctly and check the notebook.
-- Save notes in each edition and confirm they remain separate after reload.
-- Test 9 g / 18 g·mol⁻¹ = 0.5 mol and 0.20 mol / 0.50 L = 0.4 mol·L⁻¹.
-- Test the URL from the mainland before claiming access there.
+- Students choose HKDSE, 人教版 or general high-school guidance. The tutor replies in the student's question language, with the app edition as fallback. Guidance does not imply official syllabus certification.
+- The browser calls same-origin `/api/chat`. Only the Worker sends the key to DeepSeek. Cross-origin browser requests are refused; this is not user authentication.
+- Each request is limited to 64 KiB, nine alternating messages, 4,000 characters per student message and 1,400 output tokens. The UI sends up to two previous exchanges, trimming older context to fit. Upstream requests time out after 60 seconds. There are no automatic paid retries.
+- The included rate-limit binding permits approximately 10 requests per minute per network IP at each Cloudflare location. Shared school networks share this allowance. This is an abuse throttle, not a hard account spending cap; monitor DeepSeek usage and credit. The Worker fails closed if the binding is absent.
+- Chat stays in tab memory, separate for each edition; reloading clears it. The question, recent exchanges and selected lesson are sent to DeepSeek. Notes, names and student IDs are not requested or automatically attached. The application does not log chat or persist it server-side; the provider's own data handling still applies.
+- Model output is escaped plain text, preserving chemical symbols and line breaks. No AI-generated HTML is executed.
 
-No production deployment or browser layout verification was possible in the authoring session.
+## Troubleshooting
+
+- **Tutor not available:** check the deployed Worker has its runtime secret and rate-limit binding. For account configuration or credit problems, check the DeepSeek dashboard. Private upstream errors are never exposed to students.
+- **Too many questions:** wait one minute; a shared network can hit the throttle.
+- **Network / busy / timeout:** retry manually. The draft is kept after failure. Stop waiting cancels the browser's wait; an upstream request already accepted by DeepSeek may still incur charges.
+- **AI page missing:** confirm the Worker is deployed from the current original repository and refresh. Deploy-button copies can track a different repository.
+
+## Verification
+
+`npm run check` covers existing study features plus tutor context, follow-ups, bilingual isolation, escaping, reset races, payload validation, origin checks, rate limiting, missing configuration and safe upstream-error handling. These checks use DOM stubs and a mocked provider. They do not verify browser layout, a real DeepSeek account or production deployment.
 
 ## Official references
 
-- Static HTML on Pages: https://developers.cloudflare.com/pages/framework-guides/deploy-anything/
-- Git integration: https://developers.cloudflare.com/pages/get-started/git-integration/
-- Worker static assets: https://developers.cloudflare.com/workers/static-assets/binding/
-- Deploy buttons: https://developers.cloudflare.com/workers/platform/deploy-buttons/
+- DeepSeek API: https://api-docs.deepseek.com/
+- Worker secrets: https://developers.cloudflare.com/workers/configuration/secrets/
+- Worker scripts with assets: https://developers.cloudflare.com/workers/static-assets/routing/worker-script/
+- Rate-limit bindings: https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/

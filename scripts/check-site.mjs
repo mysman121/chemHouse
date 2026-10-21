@@ -25,7 +25,8 @@ const context={
  document,location,
  window:{addEventListener:(name,fn)=>listeners[name]=fn,scrollTo(){},print(){}},
  localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)},
- URLSearchParams,Blob,URL,setTimeout
+ URLSearchParams,Blob,URL,setTimeout,clearTimeout,AbortController,TextEncoder,
+ fetch:(...args)=>mockFetch(...args)
 };
 const api=vm.runInNewContext(script,context);
 function route(hash){location.hash=hash;listeners.hashchange();}
@@ -61,7 +62,7 @@ route("#/en/notes");
 assert.ok(!node("app").innerHTML.includes("How many moles are in 5.85 g"));
 route("#/zh/lesson/grammar");
 assert.equal(api.getState().view,"learn");
-for(const edition of ["en","zh"])for(const view of ["home","learn","practice","tools","notes","about"]){
+for(const edition of ["en","zh"])for(const view of ["home","learn","practice","tools","notes","about","ai"]){
  route("#/"+edition+"/"+view);
  assert.ok(node("app").innerHTML.length>2000);
  assert.ok(!node("app").innerHTML.includes("undefined"));
@@ -75,5 +76,30 @@ assert.equal(safe.read.length,1);
 assert.equal(safe.notes,"");
 assert.equal(Object.keys(safe.answers).length,1);
 assert.equal(safe.answers["moles-0"].correct,false);
-console.log("ChemHouse checks passed: routes, both editions, calculations, note isolation, answer review, escaping and saved-record validation.");
+let sent, mockFetch=async (url,options)=>{sent={url,body:JSON.parse(options.body)};return {ok:true,json:async()=>({answer:'Use <script>alert(1)</script> & units.'})};};
+const settle=()=>new Promise(resolve=>setImmediate(resolve));
+const ask=text=>{handlers.input({target:{id:'ai-input',value:text}});handlers.submit({target:{id:'ai-form'},preventDefault(){}});};
+route('#/en/lesson/moles');click('ask-lesson','moles');listeners.hashchange();
+assert.equal(api.getState().view,'ai');
+assert.ok(node('app').innerHTML.includes('selected>The mole'));
+ask('Explain moles');await settle();
+assert.equal(sent.url,'/api/chat');assert.equal(sent.body.curriculum,'hkdse');
+assert.ok(sent.body.context.includes('The mole'));
+assert.ok(node('app').innerHTML.includes('&lt;script&gt;alert(1)&lt;/script&gt; &amp; units.'));
+assert.ok(!node('app').innerHTML.includes('<script>alert'));
+ask('An example?');await settle();
+assert.equal(sent.body.messages.length,3);
+route('#/zh/ai');assert.ok(!node('app').innerHTML.includes('Explain moles'));
+mockFetch=async()=>({ok:false,json:async()=>({error:'not_configured'})});
+ask('什么是摩尔？');await settle();
+assert.ok(node('app').innerHTML.includes('尚未启用'));
+assert.ok(node('app').innerHTML.includes('什么是摩尔？</textarea>'));
+click('ai-clear');
+let finish;mockFetch=()=>new Promise(resolve=>{finish=resolve;});
+ask('Old request');click('ai-clear');
+finish({ok:true,json:async()=>({answer:'Stale reply'})});await settle();
+assert.ok(!node('app').innerHTML.includes('Stale reply'));
+assert.ok(!node('app').innerHTML.includes('Old request'));
+console.log("ChemHouse checks passed: existing study features, AI routes, context, follow-ups, escaped replies, language isolation, errors and reset races.");
 console.log("These are JavaScript and rendered-markup checks with DOM stubs, not browser layout or deployment verification.");
+
