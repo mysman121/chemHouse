@@ -31,8 +31,8 @@ const context={
 const api=vm.runInNewContext(script,context);
 function route(hash){location.hash=hash;listeners.hashchange();}
 function click(action,value="",extra={}){handlers.click({target:{closest:()=>({dataset:{action,value,...extra}})}});}
-assert.equal(api.visibleLessons().length,18);
-assert.equal(api.allQuestions().length,36);
+assert.equal(api.visibleLessons().length,25);
+assert.equal(api.allQuestions().length,43);
 assert.equal(api.calculate("9","18").value,.5);
 assert.equal(api.calculate("0.2","0.5").value,.4);
 assert.equal(api.calculate("0","18").value,0);
@@ -62,7 +62,7 @@ route("#/en/notes");
 assert.ok(!node("app").innerHTML.includes("How many moles are in 5.85 g"));
 route("#/zh/lesson/grammar");
 assert.equal(api.getState().view,"learn");
-for(const edition of ["en","zh"])for(const view of ["home","learn","practice","tools","notes","about","ai"]){
+for(const edition of ["en","zh","hk"])for(const view of ["home","learn","practice","tools","notes","about","ai"]){
  route("#/"+edition+"/"+view);
  assert.ok(node("app").innerHTML.length>2000);
  assert.ok(!node("app").innerHTML.includes("undefined"));
@@ -103,3 +103,21 @@ assert.ok(!node('app').innerHTML.includes('Old request'));
 console.log("ChemHouse checks passed: existing study features, AI routes, context, follow-ups, escaped replies, language isolation, errors and reset races.");
 console.log("These are JavaScript and rendered-markup checks with DOM stubs, not browser layout or deployment verification.");
 
+
+route("#/hk/home");
+assert.equal(document.documentElement.lang,"zh-Hant-HK");
+assert.equal(api.visibleLessons().length,25);
+assert.equal(api.allQuestions().length,43);
+assert.equal(api.getState().record.notes,"");
+handlers.input({target:{id:"notes-input",value:"繁體中文筆記"}});
+route("#/en/notes");assert.equal(api.getState().record.notes,"Notes <b>not markup</b>");
+route("#/hk/notes");assert.equal(api.getState().record.notes,"繁體中文筆記");
+for(const lang of ["hk","en"])for(const lesson of api.visibleLessons()){
+ route("#/"+lang+"/lesson/"+lesson.id);
+ assert.ok(!node("app").innerHTML.includes("undefined"));
+ assert.ok(node("app").innerHTML.includes(lang==="hk"?"English support":"繁體中文輔助"));
+}
+route("#/hk/home");click("challenge");listeners.hashchange();assert.equal(api.getState().view,"practice");
+route("#/zh/lesson/hk-rates");assert.equal(api.getState().view,"learn");
+route("#/hk/ai");assert.ok(node("app").innerHTML.includes("AI 答疑"));
+console.log("Three-edition regression checks passed: Traditional Chinese routes, every bilingual lesson, challenges, isolated notes, AI screen and mainland-only filtering.");
