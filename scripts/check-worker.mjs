@@ -55,6 +55,8 @@ test('DeepSeek payload, contextual follow-ups, safe output and upstream failures
     assert.match(upstream.body.messages[0].content, /Simplified Chinese/);
     assert.match(upstream.body.messages[1].content, /物质的量/);
     assert.equal(upstream.body.messages.at(-1).content, '请举例');
+    await worker.fetch(req({ ...body, edition: 'hk' }), env());
+    assert.match(upstream.body.messages[0].content, /Traditional Chinese with English key terms/);
     for (const status of [401, 402, 429, 500]) {
       globalThis.fetch = async () => new Response('test-secret-never-return private diagnostics', { status });
       const failure = await worker.fetch(req(), env());
