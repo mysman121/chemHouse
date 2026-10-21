@@ -1,0 +1,11 @@
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const here = path.dirname(fileURLToPath(import.meta.url));
+const out = path.join(here, 'dist');
+rmSync(out, { recursive: true, force: true });
+mkdirSync(out, { recursive: true });
+cpSync(path.join(here, '../public'), out, { recursive: true });
+cpSync(path.join(here, 'api-worker.js'), path.join(out, '_worker.js'));
+writeFileSync(path.join(out, '_routes.json'), JSON.stringify({ version: 1, include: ['/api/*'], exclude: [] }, null, 2) + '\n');
+console.log('Pages build ready: pages/dist (same study app, same-origin AI service binding).');

@@ -1,0 +1,10 @@
+{
+  "name": "chemhouse-pages",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node --test check-pages.mjs"
+  }
+}
